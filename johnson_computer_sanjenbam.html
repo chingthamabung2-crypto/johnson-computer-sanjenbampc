@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Johnson Computer Sanjenbam | Printing & Passport Photo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
+<script src="https://unpkg.com/mammoth@1.8.0/mammoth.browser.min.js"></script>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<script type="module">
+import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs";
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs";
+window.pdfjsLib = pdfjsLib;
+</script>
+<style>
+:root{--primary:#0b5cff;--dark:#10213b;--bg:#f4f7fb;--card:#fff;--muted:#64748b;--border:#dbe3ef}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:#172033}
+header{background:linear-gradient(135deg,#0b5cff,#173b9c);color:white;padding:30px 18px}
+.container{max-width:1100px;margin:auto}.brand{display:flex;gap:16px;align-items:center}.logo{width:58px;height:58px;border-radius:14px;background:white;color:var(--primary);display:grid;place-items:center;font-weight:900;font-size:20px}
+h1{margin:0;font-size:clamp(25px,4vw,40px)}.sub{opacity:.9;margin-top:6px}.contact{margin-top:15px;display:flex;flex-wrap:wrap;gap:10px}.pill{background:rgba(255,255,255,.15);padding:8px 12px;border-radius:999px}
+main{padding:24px 18px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}@media(max-width:800px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;box-shadow:0 8px 30px rgba(20,40,80,.06)}
+h2{margin:0 0 14px;font-size:21px}.muted{color:var(--muted);font-size:14px}
+input[type=file]{width:100%;padding:14px;border:2px dashed #b8c6da;border-radius:12px;background:#f8fbff}
+.controls{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}.control{display:flex;flex-direction:column;gap:6px}.control label{font-size:13px;font-weight:700}.control input,.control select{padding:10px;border:1px solid var(--border);border-radius:9px}
+button{border:0;border-radius:10px;padding:11px 14px;font-weight:800;cursor:pointer}.primary{background:var(--primary);color:#fff}.secondary{background:#eaf1ff;color:#1747a3}.danger{background:#fee2e2;color:#991b1b}.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:15px}
+.preview{min-height:260px;background:#eaf0f7;border-radius:14px;display:grid;place-items:center;overflow:hidden;margin-top:15px;position:relative}.preview canvas{max-width:100%;max-height:420px;display:block}#cropArea{user-select:none}#cropOverlay{z-index:3;box-shadow:0 0 0 9999px rgba(0,0,0,.38)}#cropOverlay:after{content:"";position:absolute;right:-9px;bottom:-9px;width:18px;height:18px;background:#0b5cff;border:2px solid white;border-radius:50%;cursor:nwse-resize}
+.price{display:grid;grid-template-columns:1fr auto;gap:10px;border-bottom:1px solid var(--border);padding:10px 0}.price:last-child{border:0}.price strong{color:var(--primary)}
+.notice{margin-top:14px;background:#fff7df;border:1px solid #f3d27a;padding:12px;border-radius:10px;font-size:13px}
+footer{text-align:center;color:var(--muted);padding:25px}
+.small{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+<div class="container">
+ <div class="brand">
+  <div class="logo">JC</div>
+  <div><h1>JOHNSON COMPUTER SANJENBAM</h1><div class="sub">Computer • Printing • Xerox • Passport Photo</div></div>
+ </div>
+ <div class="contact">
+  <span class="pill">📍 Kha Sanjenbam Makha Leikai</span>
+  <span class="pill">📞 7005800230</span>
+ </div>
+</div>
+</header>
+
+<main class="container">
+<div class="grid">
+<section class="card">
+<h2>📷 Passport Photo Maker</h2>
+<p class="muted">Upload a photo. Processing happens directly in your browser; your original photo is not uploaded to a server.</p>
+<input id="photoInput" type="file" accept="image/*">
+<div class="controls">
+ <div class="control"><label>Photo width (mm)</label><input id="pw" type="number" value="35" min="10" max="100"></div>
+ <div class="control"><label>Photo height (mm)</label><input id="ph" type="number" value="45" min="10" max="100"></div>
+ <div class="control"><label>Copies</label><input id="copies" type="number" value="8" min="1" max="50"></div>
+ <div class="control"><label>Border</label><select id="border"><option value="1">Add border</option><option value="0">No border</option></select></div>
+</div>
+<div class="actions">
+ <button class="primary" id="passportBtn">Make Passport Sheet</button>
+ <button class="secondary" id="cropBtn">Crop / Fit Photo</button>
+ <button class="secondary" id="manualCropBtn">✂ Manual Crop</button>
+</div>
+<div class="preview" id="cropArea">
+ <canvas id="canvas"></canvas>
+ <div id="cropOverlay" style="display:none;position:absolute;border:2px solid #0b5cff;background:rgba(11,92,255,.12);cursor:move;touch-action:none"></div>
+</div>
+<div id="cropControls" style="display:none;margin-top:12px">
+ <p class="muted">Drag the blue crop box over the photo. Drag the corner to resize. Then press <b>Apply Crop</b>.</p>
+ <div class="actions">
+  <button class="primary" id="applyCropBtn">Apply Crop</button>
+  <button class="secondary" id="cancelCropBtn">Cancel</button>
+ </div>
+</div>
+<div class="actions">
+ <button class="primary" id="downloadPassport">⬇ Download JPG</button>
+ <button class="secondary" id="sharePassport">📱 Share File to WhatsApp</button>
+</div>
+<p class="small">On phones that support file sharing, “Share File to WhatsApp” shares the actual JPG file. A website cannot force WhatsApp Desktop to accept a file attachment without WhatsApp's own API.</p>
+</section>
+
+
+</div>
+
+<div class="grid" style="margin-top:20px">
+<section class="card">
+<h2>📁 Multiple Files</h2>
+<p class="muted">Select multiple files at once and process them directly in the browser.</p>
+<input id="docInput" type="file" multiple accept="image/*,.pdf,.txt,.csv,.html,.htm,.docx">
+<div class="actions">
+ <button class="primary" id="processDocs">Process Selected Files</button>
+ <button class="secondary" id="shareDocs">📱 Send All Files</button>
+ <button class="secondary" id="downloadDocs">⬇ Download All</button>
+</div>
+<div id="docList" class="notice" style="display:none"></div>
+<p class="small">Supports multiple JPG/PNG/WebP, PDF, TXT, CSV, HTML and DOCX files. On supported mobile browsers, Send All Files opens the share sheet so WhatsApp can receive the actual files.</p>
+</section>
+
+
+
+<section class="card">
+<h2>📄 A4 Print Sheet</h2>
+<p class="muted">Create a print-ready A4 sheet (210×297 mm) directly in the browser. Upload images and arrange them for printing.</p>
+<input id="a4Input" type="file" accept="image/*" multiple>
+<div class="controls">
+ <div class="control"><label>Copies per image</label><input id="a4Copies" type="number" value="1" min="1" max="50"></div>
+ <div class="control"><label>Image layout</label><select id="a4Layout"><option value="fit">Fit to A4</option><option value="original">Original / centered</option></select></div>
+</div>
+<div class="actions">
+ <button class="primary" id="makeA4">Create A4 Sheet</button>
+ <button class="secondary" id="downloadA4">⬇ Download A4 JPG</button>
+ <button class="secondary" id="shareA4">📱 Send A4 Sheet</button>
+ <button class="secondary" id="shareA4Multiple">📱 Send Multiple A4 Files</button>
+</div>
+<div id="a4List" class="notice" style="display:none"></div>
+<div class="preview"><canvas id="a4Canvas"></canvas></div>
+<p class="small">A4 output: 2480×3508 pixels at 300 DPI.</p>
+</section>
+
+<section class="card">
+<h2>💰 Printing & Xerox Rates</h2>
+<div class="price"><span>Black & White — per copy</span><strong>₹3</strong></div>
+<div class="price"><span>Colour — per copy</span><strong>₹5</strong></div>
+<div class="notice">For printing orders, please contact <b>7005800230</b>.</div>
+</section>
+
+<section class="card">
+<h2>📲 Send Files</h2>
+<p>Use the file-share buttons after creating a passport sheet or A4 sheet. On a supported phone/browser, select WhatsApp and send the generated JPG directly as a file/image.</p>
+<button class="primary" onclick="shareCurrent()">Share Latest File</button>
+<div id="status" class="notice" style="display:none"></div>
+</section>
+</div>
+</main>
+
+<footer>© 2026 Johnson Computer Sanjenbam • Kha Sanjenbam Makha Leikai • 7005800230</footer>
+
+<script>
+let img=null, latestBlob=null, latestName="johnson-computer-print.jpg";
+
+const photoInput=document.getElementById('photoInput');
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+const statusEl=document.getElementById('status');
+
+function showStatus(msg){statusEl.style.display='block';statusEl.textContent=msg}
+
+function loadImage(file){
+ return new Promise((resolve,reject)=>{
+  const url=URL.createObjectURL(file);
+  const im=new Image();
+  im.onload=()=>{URL.revokeObjectURL(url);resolve(im)};
+  im.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Image could not be loaded.'))};
+  im.src=url;
+ });
+}
+photoInput.onchange=async e=>{
+ const file=e.target.files && e.target.files[0];
+ if(!file) return;
+ try{
+  img=await loadImage(file);
+  drawSingle();
+  showStatus('Photo loaded successfully. It is processed locally in your browser.');
+ }catch(err){
+  console.error(err);
+  img=null;
+  showStatus('Could not load this image. Please choose a JPG, PNG, or WebP file.');
+ }
+};
+function drawCrop(im,w,h){
+ const target=w/h, src=im.width/im.height;
+ let sx=0,sy=0,sw=im.width,sh=im.height;
+ if(src>target){sw=im.height*target;sx=(im.width-sw)/2}
+ else{sh=im.width/target;sy=(im.height-sh)/2}
+ return [sx,sy,sw,sh];
+}
+function drawSingle(){
+ if(!img)return;
+ const W=500,H=Math.round(W*45/35),[sx,sy,sw,sh]=drawCrop(img,W,H);
+ canvas.width=W;canvas.height=H;
+ ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);ctx.drawImage(img,sx,sy,sw,sh,0,0,W,H);
+ if(document.getElementById('border').value==='1'){ctx.strokeStyle='#111';ctx.lineWidth=3;ctx.strokeRect(1.5,1.5,W-3,H-3)}
+}
+document.getElementById('cropBtn').onclick=drawSingle;
+
+/* Manual crop tool: crop rectangle can be dragged and resized. */
+const cropArea=document.getElementById('cropArea');
+const cropOverlay=document.getElementById('cropOverlay');
+const cropControls=document.getElementById('cropControls');
+let cropState={active:false,x:0,y:0,w:0,h:0,mode:null,startX:0,startY:0,startRect:null};
+
+function getCanvasRect(){
+ const r=canvas.getBoundingClientRect();
+ return {left:r.left,top:r.top,width:r.width,height:r.height};
+}
+function setOverlay(){
+ const r=getCanvasRect();
+ cropOverlay.style.display='block';
+ cropOverlay.style.left=(cropState.x + (cropArea.clientWidth-r.width)/2)+'px';
+ cropOverlay.style.top=(cropState.y + (cropArea.clientHeight-r.height)/2)+'px';
+ cropOverlay.style.width=cropState.w+'px';
+ cropOverlay.style.height=cropState.h+'px';
+}
+function startManualCrop(){
+ if(!img){showStatus('Please upload a photo first.');return}
+ drawSingle();
+ requestAnimationFrame(()=>{
+  const r=getCanvasRect();
+  const side=Math.min(r.width,r.height)*.72;
+  cropState={active:true,x:(r.width-side)/2,y:(r.height-side)/2,w:side,h:side,mode:null,startX:0,startY:0,startRect:null};
+  cropControls.style.display='block';
+  setOverlay();
+  showStatus('Manual crop is active. Drag the box or its corner, then apply the crop.');
+ });
+}
+function pointerStart(e){
+ if(!cropState.active)return;
+ const p=e.touches?e.touches[0]:e;
+ const r=cropOverlay.getBoundingClientRect();
+ const nearResize=(p.clientX>r.right-24 && p.clientY>r.bottom-24);
+ cropState.mode=nearResize?'resize':'move';
+ cropState.startX=p.clientX;cropState.startY=p.clientY;
+ cropState.startRect={x:cropState.x,y:cropState.y,w:cropState.w,h:cropState.h};
+ e.preventDefault();
+}
+function pointerMove(e){
+ if(!cropState.active || !cropState.mode)return;
+ const p=e.touches?e.touches[0]:e;
+ const r=getCanvasRect();
+ const dx=p.clientX-cropState.startX, dy=p.clientY-cropState.startY;
+ const s=cropState.startRect;
+ if(cropState.mode==='move'){
+  cropState.x=Math.max(0,Math.min(r.width-s.w,s.x+dx));
+  cropState.y=Math.max(0,Math.min(r.height-s.h,s.y+dy));
+ }else{
+  const size=Math.max(40,Math.min(r.width-cropState.x,r.height-cropState.y,Math.max(dx,dy)+s.w));
+  cropState.w=size;cropState.h=size;
+ }
+ setOverlay();e.preventDefault();
+}
+function pointerEnd(){cropState.mode=null}
+cropOverlay.addEventListener('mousedown',pointerStart);
+cropOverlay.addEventListener('touchstart',pointerStart,{passive:false});
+window.addEventListener('mousemove',pointerMove);
+window.addEventListener('touchmove',pointerMove,{passive:false});
+window.addEventListener('mouseup',pointerEnd);
+window.addEventListener('touchend',pointerEnd);
+
+document.getElementById('manualCropBtn').onclick=startManualCrop;
+document.getElementById('cancelCropBtn').onclick=()=>{
+ cropState.active=false;cropOverlay.style.display='none';cropControls.style.display='none';drawSingle();
+};
+document.getElementById('applyCropBtn').onclick=()=>{
+ if(!img || !cropState.active)return;
+ const r=getCanvasRect();
+ const canvasScaleX=canvas.width/r.width;
+ const canvasScaleY=canvas.height/r.height;
+ const previewSx=cropState.x*canvasScaleX;
+ const previewSy=cropState.y*canvasScaleY;
+ const previewSw=cropState.w*canvasScaleX;
+ const previewSh=cropState.h*canvasScaleY;
+
+ // Map the visible crop rectangle back through the passport preview's
+ // center-crop transform to the ORIGINAL image coordinates.
+ const targetRatio=canvas.width/canvas.height;
+ const srcRatio=img.width/img.height;
+ let baseSx=0,baseSy=0,baseSw=img.width,baseSh=img.height;
+ if(srcRatio>targetRatio){
+   baseSw=img.height*targetRatio;
+   baseSx=(img.width-baseSw)/2;
+ }else{
+   baseSh=img.width/targetRatio;
+   baseSy=(img.height-baseSh)/2;
+ }
+ const sx=baseSx+(previewSx/canvas.width)*baseSw;
+ const sy=baseSy+(previewSy/canvas.height)*baseSh;
+ const sw=(previewSw/canvas.width)*baseSw;
+ const sh=(previewSh/canvas.height)*baseSh;
+
+ // Keep original pixels: no JPEG round-trip and no downscaled preview is used.
+ const temp=document.createElement('canvas');
+ temp.width=Math.max(1,Math.round(sw));
+ temp.height=Math.max(1,Math.round(sh));
+ const tc=temp.getContext('2d');
+ tc.imageSmoothingEnabled=false;
+ tc.drawImage(img,sx,sy,sw,sh,0,0,temp.width,temp.height);
+ const newImg=new Image();
+ newImg.onload=()=>{
+  img=newImg;
+  cropState.active=false;cropOverlay.style.display='none';cropControls.style.display='none';
+  drawSingle();
+  showStatus(`Manual crop applied at original source resolution: ${temp.width}×${temp.height}px.`);
+ };
+ newImg.src=temp.toDataURL('image/png');
+};
+
+function makePassport(){
+ if(!img){showStatus('Please upload a photo first.');return}
+ const mmW=+document.getElementById('pw').value, mmH=+document.getElementById('ph').value, n=+document.getElementById('copies').value;
+ const dpi=300, scale=dpi/25.4, W=Math.round(mmW*scale), H=Math.round(mmH*scale);
+ const cols=Math.max(1,Math.floor(1200/(W+30))), rows=Math.ceil(n/cols);
+ canvas.width=cols*(W+30)+30;canvas.height=rows*(H+30)+30;
+ ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+ const [sx,sy,sw,sh]=drawCrop(img,W,H);
+ for(let i=0;i<n;i++){
+  const x=30+(i%cols)*(W+30), y=30+Math.floor(i/cols)*(H+30);
+  ctx.drawImage(img,sx,sy,sw,sh,x,y,W,H);
+  if(document.getElementById('border').value==='1'){ctx.strokeStyle='#111';ctx.lineWidth=Math.max(2,Math.round(scale*.3));ctx.strokeRect(x,y,W,H)}
+ }
+ canvas.toBlob(b=>{latestBlob=b;latestName='johnson-passport-photos.jpg'},'image/jpeg',.95);
+ showStatus(`${n} passport photos created at ${mmW}×${mmH} mm.`)
+}
+document.getElementById('passportBtn').onclick=makePassport;
+
+function downloadBlob(blob,name){
+ if(!blob)return showStatus('Create a file first.');
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
+ setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+document.getElementById('downloadPassport').onclick=()=>downloadBlob(latestBlob,latestName);
+
+async function shareBlob(blob,name){
+ if(!blob)return showStatus('Create a file first.');
+ const file=new File([blob],name,{type:'image/jpeg'});
+ if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
+  try{await navigator.share({files:[file],title:'Johnson Computer Sanjenbam - Print File'});showStatus('Share sheet opened. Choose WhatsApp to send the actual file.')}
+  catch(e){if(e.name!=='AbortError')showStatus('Sharing was not completed. You can download the file instead.')}
+ }else{
+  showStatus('Direct file sharing is not supported by this browser. Download the JPG and attach it in WhatsApp.');
+  downloadBlob(blob,name);
+ }
+}
+document.getElementById('sharePassport').onclick=()=>shareBlob(latestBlob,latestName);
+
+
+/* A4 print sheet with multiple-file output */
+const a4Input=document.getElementById('a4Input');
+const a4Canvas=document.getElementById('a4Canvas');
+const a4ctx=a4Canvas.getContext('2d');
+const a4List=document.getElementById('a4List');
+window.a4Files=[];
+
+async function buildA4Blob(im,copies,layout){
+ const W=2480,H=3508,margin=90,gap=45;
+ const c=document.createElement('canvas');c.width=W;c.height=H;
+ const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);
+ let y=margin;
+ const aw=W-2*margin,ah=H-2*margin;
+ const scale=layout==='original'
+   ? Math.min(aw/im.width,ah/im.height,1)
+   : Math.min(aw/im.width,ah/im.height);
+ const dw=Math.round(im.width*scale),dh=Math.round(im.height*scale);
+ for(let n=0;n<copies;n++){
+  if(y+dh>H-margin)break;
+  const xx=Math.round((W-dw)/2);
+  x.drawImage(im,0,0,im.width,im.height,xx,y,dw,dh);
+  x.strokeStyle='#bbb';x.lineWidth=2;x.strokeRect(xx,y,dw,dh);
+  y+=dh+gap;
+ }
+ return new Promise(resolve=>c.toBlob(resolve,'image/jpeg',.95));
+}
+
+async function makeA4Sheet(){
+ const files=[...a4Input.files];
+ if(!files.length){showStatus('Please select one or more images for A4 printing.');return}
+ const copies=Math.max(1,Math.min(50,+document.getElementById('a4Copies').value||1));
+ const layout=document.getElementById('a4Layout').value;
+ const imgs=await Promise.all(files.map(loadImage));
+ window.a4Files=[];
+ for(let i=0;i<imgs.length;i++){
+  const blob=await buildA4Blob(imgs[i],copies,layout);
+  window.a4Files.push({name:`johnson-a4-${i+1}.jpg`,blob});
+ }
+ latestBlob=window.a4Files[0].blob;latestName=window.a4Files[0].name;
+
+ // Preview first generated A4 sheet.
+ const previewUrl=URL.createObjectURL(window.a4Files[0].blob);
+ const previewImg=new Image();
+ previewImg.onload=()=>{
+  a4Canvas.width=2480;a4Canvas.height=3508;
+  a4ctx.drawImage(previewImg,0,0,2480,3508);
+  URL.revokeObjectURL(previewUrl);
+ };
+ previewImg.src=previewUrl;
+
+ a4List.style.display='block';
+ a4List.textContent=`Created ${window.a4Files.length} A4 file(s). Send Multiple A4 Files to share all of them together.`;
+ showStatus(`Created ${window.a4Files.length} A4 sheet file(s).`);
+}
+
+document.getElementById('makeA4').onclick=makeA4Sheet;
+document.getElementById('downloadA4').onclick=()=>downloadBlob(latestBlob,latestName);
+
+document.getElementById('shareA4').onclick=()=>shareBlob(latestBlob,latestName);
+
+document.getElementById('shareA4Multiple').onclick=async()=>{
+ const files=(window.a4Files||[]).map(x=>new File([x.blob],x.name,{type:'image/jpeg'}));
+ if(!files.length){showStatus('Create the A4 sheets first.');return}
+ if(navigator.share && (!navigator.canShare || navigator.canShare({files}))){
+  try{
+   await navigator.share({files,title:'Johnson Computer Sanjenbam - A4 Print Sheets'});
+   showStatus(`${files.length} A4 file(s) shared. Choose WhatsApp.`);
+  }catch(e){
+   if(e.name!=='AbortError')showStatus('Sharing was not completed.');
+  }
+ }else{
+  showStatus('This browser cannot share multiple files at once. Downloading the A4 files instead.');
+  files.forEach((f,i)=>setTimeout(()=>downloadBlob(f,f.name),i*300));
+ }
+};
+
+/* Multi-file browser document processing */
+const docInput=document.getElementById('docInput');
+const docList=document.getElementById('docList');
+window.processedDocumentFiles=[];
+
+async function renderPdfToJpg(file){
+ if(!window.pdfjsLib) throw new Error('PDF engine is still loading. Please try again.');
+ const pdf=await window.pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+ const out=[];
+ for(let p=1;p<=pdf.numPages;p++){
+  const page=await pdf.getPage(p), v=page.getViewport({scale:300/72});
+  const c=document.createElement('canvas'); c.width=Math.ceil(v.width);c.height=Math.ceil(v.height);
+  await page.render({canvasContext:c.getContext('2d'),viewport:v}).promise;
+  const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.95));
+  out.push({name:`${file.name.replace(/\.pdf$/i,'')}-page-${p}.jpg`,blob:b});
+ }
+ return out;
+}
+async function renderTextLike(file){
+ const text=await file.text(),c=document.createElement('canvas');c.width=2480;c.height=3508;
+ const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+ x.fillStyle='#111';x.font='36px Arial';let y=80;
+ for(const line of text.split(/\r?\n/)){
+  if(y>3400)break; let cur='';
+  for(const word of line.split(/\s+/)){
+   const test=cur?cur+' '+word:word;
+   if(x.measureText(test).width>2250){x.fillText(cur,115,y);y+=52;cur=word}else cur=test;
+  }
+  if(cur){x.fillText(cur,115,y);y+=52}
+ }
+ const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.95));
+ return [{name:file.name.replace(/\.[^.]+$/,'')+'-print.jpg',blob:b}];
+}
+async function renderDocx(file){
+ if(!window.mammoth||!window.html2canvas) throw new Error('DOCX converter is still loading. Please try again.');
+ const result=await mammoth.convertToHtml({arrayBuffer:await file.arrayBuffer()});
+ const wrap=document.createElement('div');
+ wrap.style.cssText='position:fixed;left:-10000px;top:0;width:793px;min-height:1122px;background:white;color:#111;padding:55px;font-family:Arial;font-size:16px;line-height:1.5';
+ wrap.innerHTML=result.value;document.body.appendChild(wrap);
+ const c=await html2canvas(wrap,{scale:2,backgroundColor:'#fff'});wrap.remove();
+ const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.95));
+ return [{name:file.name.replace(/\.docx$/i,'')+'-print.jpg',blob:b}];
+}
+async function processSelectedDocs(){
+ const files=[...docInput.files];
+ if(!files.length){docList.style.display='block';docList.textContent='Select files first.';return}
+ const results=[],errors=[];
+ for(const f of files){
+  try{
+   if(f.type.startsWith('image/')) results.push({name:f.name,blob:f});
+   else if(/\.pdf$/i.test(f.name)) results.push(...await renderPdfToJpg(f));
+   else if(/\.docx$/i.test(f.name)) results.push(...await renderDocx(f));
+   else if(/\.(txt|csv|html|htm)$/i.test(f.name)) results.push(...await renderTextLike(f));
+   else errors.push(`${f.name}: unsupported in browser-only mode`);
+  }catch(e){errors.push(`${f.name}: ${e.message}`)}
+ }
+ window.processedDocumentFiles=results;
+ if(results.length){latestBlob=results[0].blob;latestName=results[0].name}
+ docList.style.display='block';
+ docList.innerHTML=`<b>Ready: ${results.length} file/page(s).</b>`+
+  (errors.length?'<br><br>'+errors.join('<br>'):'')+
+  '<br><br>Use Send All Files to share every generated file together.';
+}
+async function shareAllFiles(){
+ const files=(window.processedDocumentFiles||[]).map(x=>new File([x.blob],x.name,{type:x.blob.type||'image/jpeg'}));
+ if(!files.length){showStatus('Process the selected files first.');return}
+ if(navigator.share && (!navigator.canShare||navigator.canShare({files}))){
+  try{await navigator.share({files,title:'Johnson Computer Sanjenbam - Multiple Files'});showStatus(`${files.length} file(s) shared. Choose WhatsApp.`)}
+  catch(e){if(e.name!=='AbortError')showStatus('Sharing was not completed.')}
+ }else{
+  showStatus('Multiple-file sharing is not supported by this browser. Downloading files instead.');
+  files.forEach((f,i)=>setTimeout(()=>downloadBlob(f,f.name),i*300));
+ }
+}
+function downloadAllFiles(){
+ const files=window.processedDocumentFiles||[];
+ if(!files.length){showStatus('Process the selected files first.');return}
+ files.forEach((f,i)=>setTimeout(()=>downloadBlob(f.blob,f.name),i*300));
+ showStatus(`${files.length} file(s) queued for download.`);
+}
+document.getElementById('processDocs').onclick=processSelectedDocs;
+document.getElementById('shareDocs').onclick=shareAllFiles;
+document.getElementById('downloadDocs').onclick=downloadAllFiles;
+
+function shareCurrent(){shareBlob(latestBlob,latestName)}
+</script>
+</body>
+</html>
